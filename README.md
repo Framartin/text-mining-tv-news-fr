@@ -24,6 +24,8 @@ Personal project to analyse how TV deals with news. Statistics can be used to de
 virtualenv -p python3 venv
 . venv/bin/activate
 pip install -r requirements.txt
+
+sqlite3 transcript.db < scraping/schema.sql
 ```
 
 ### Crawl

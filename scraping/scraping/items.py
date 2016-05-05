@@ -15,6 +15,8 @@ class Tf1Item(scrapy.Item):
     url = scrapy.Field()
     channel = scrapy.Field()
     topic = scrapy.Field()
+    duration = scrapy.Field()
+    speaker = scrapy.Field()
     type = scrapy.Field()
     date = scrapy.Field()
     description = scrapy.Field()
