@@ -20,6 +20,8 @@ Personal project to analyse how TV deals with news. Statistics can be used to de
 > 
 > — me 30 seconds ago
 
+Install python3, [virtualenv](https://virtualenv.pypa.io) and sqlite3.
+
 ```
 virtualenv -p python3 venv
 . venv/bin/activate
@@ -27,6 +29,8 @@ pip install -r requirements.txt
 
 sqlite3 transcript.db < scraping/schema.sql
 ```
+
+If `fr_FR.utf8` is not in `locale -a`, you have to install this locale on you system. `sudo dpkg-reconfigure locales` should do the trick. Then, select `fr-FR.UTF-8` on the list. Select `None` for the default locale.
 
 ### Crawl
 
@@ -52,6 +56,7 @@ scrapy crawl tf1 -o test.json --logfile log.txt --loglevel INFO
 > — my sleeping time
 
 * check duplicate in dates. Some TV news links are duplicated on pages
+* is speaker field reliable? http://lci.tf1.fr/jt-we/videos/2012/le-13heures-du-1er-juillet-7394672.html
 
 ## License
 

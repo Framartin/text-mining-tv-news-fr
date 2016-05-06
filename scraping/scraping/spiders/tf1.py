@@ -84,7 +84,7 @@ class Tf1Spider(scrapy.Spider):
                 item['duration'] = minutes*60 + secondes
         except Exception:
             self.logger.error('Duration unknown: '+str(duration)+'; URL: '+response.url)
-        item['speaker'] = response.xpath('//div[@class="program-infos"]/div[contains(@class, "speaker")]/strong/text()').extract_first()
+        item['speaker'] = None #response.xpath('//div[@class="program-infos"]/div[contains(@class, "speaker")]/strong/text()').extract_first() #TODO: remove or parse from some descripton?
         m = re.search('/jt-(.*?)/', response.url)
         if m is not None:
             item['type'] = m.group(1)
