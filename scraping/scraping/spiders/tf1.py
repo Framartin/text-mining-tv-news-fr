@@ -19,7 +19,7 @@ class Tf1Spider(scrapy.Spider):
         try:
             locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
         except Exception:
-            raise "French locale not supported"
+            raise "fr_FR.UTF-8 locale not installed. Please install it on your system"
         self.db = {}
         self.db['conn'] = sqlite3.connect('../transcript.db')
         self.db['cursor'] = self.db['conn'].cursor()
@@ -36,12 +36,12 @@ class Tf1Spider(scrapy.Spider):
         
     def parse_emission(self, response):
         title = response.xpath('//h1/text()').extract_first()
-        date = re.search(r'(\d+)(?:er)?( (?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) 20\d{2})', title) # extract date from title
         try:
-            date_clean = date.group(1)+date.group(2)
+            date = re.search(r'(\d+)(?:er|e)?( (?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) 20\d{2})', title, re.IGNORECASE) # extract date from title
+            date_clean = (date.group(1)+date.group(2)).lower()
             date = datetime.strptime(date_clean, '%d %B %Y').date()
         except Exception:
-            self.logger.error('Date not found in: '+title+'; URL: '+response.url)
+            self.logger.error('Date not found in: '+str(title)+'; URL: '+response.url)
             date = None
         urls_subject = response.xpath('//ul/li/div/h3[contains(@class, "title")]/a/@href').extract()
         for url in urls_subject:
@@ -56,7 +56,11 @@ class Tf1Spider(scrapy.Spider):
         # Don't save the summary of the emission. Identified from the subject (examples delow gathered from a careful inspection of sujects with "topic=null")
         # ["Les titres du 20 heures du 18 juillet 2013", "Le 20 heures du 18 juillet 2013", "Les titres du journal de 20H du 18 juillet 2013", "Les titres du 20h de ce 18 juillet 2013", "Les titres du 11 avril 2016", "Les titres du journal de 20H du 1er février 2016",
         # "Les titres du journal de 20h jeudi 28 janvier 2016", "Retrouvez l'édition du 20 heures du mardi 15 mars 2016. ", "JT de 20h du 9 mars 2016", "Le journal de 20h du mardi 16 février 2016", "Les titres du 20h de ce mardi 19 avril", "Retrouvez l'édition du 20 heures du mardi 15 mars 2016. "]
-        if re.search(r'(?:^(?:Les titres|Le|Retrouvez l(?:\'|’)édition|JT de) (?:du |de ce )?(?:journal de |JT de )?(?:20|13) ?(?:h|H|heures)|^Les titres) (?:du |de ce )?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)? ?\d+(?:er)? (?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)(?: 20\d{2})?',title): # re.IGNORECASE
+        try:
+            if re.search(r'(?:^(?:Les titres|Le|Retrouvez l(?:\'|’)édition|JT de) (?:du |de ce )?(?:journal de |JT de )?(?:20|13) ?(?:h|H|heures)|^Les titres) (?:du |de ce )?(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)? ?\d+(?:er|e)? (?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)(?: 20\d{2})?',title): # re.IGNORECASE
+                return None
+        except Exception:
+            self.logger.error('Item not saved. Impossible to search in: '+str(title)+'; URL: '+response.url)
             return None
         item = Tf1Item()
         item['url'] = response.url
@@ -86,6 +90,7 @@ class Tf1Spider(scrapy.Spider):
             item['type'] = m.group(1)
         else:
             self.logger.error('Type not found in URL: '+response.url)
+            item['type'] = None
         item['date'] = response.meta['date']
         description = response.xpath('//div[@class="footer"]/p[contains(@class, "description")]/text()').extract_first()
         if description is None:
@@ -95,5 +100,6 @@ class Tf1Spider(scrapy.Spider):
             item['description'] = re.sub('ZOOM SUR', '', description)
         else:
             self.logger.error('Description is None: '+response.url)
+            item['description'] = None
         item['date_scraping'] = datetime.now()
         yield item
