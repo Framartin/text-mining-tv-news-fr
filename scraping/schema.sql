@@ -3,6 +3,7 @@ create table subject (
   id integer primary key autoincrement,
   url text not null unique,
   title text,
+  subtitle text,
   channel text not null,
   topic text,
   duration integer,

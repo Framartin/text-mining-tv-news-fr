@@ -3,7 +3,7 @@ import scrapy
 import sqlite3
 import re
 import locale
-from scraping.items import Tf1Item
+from scraping.items import SubjectItem
 from datetime import datetime
 
 class Tf1Spider(scrapy.Spider):
@@ -62,9 +62,10 @@ class Tf1Spider(scrapy.Spider):
         except Exception:
             self.logger.error('Item not saved. Impossible to search in: '+str(title)+'; URL: '+response.url)
             return None
-        item = Tf1Item()
+        item = SubjectItem()
         item['url'] = response.url
         item['title'] = title
+        item['subtitle'] = None
         item['channel'] = 'tf1'
         item['topic'] = response.xpath('//div[@class="header"]/span[contains(@class, "topic")]/text()').extract_first()
         duration = response.xpath('//div[@class="header"]/span[@class="times"]/span[contains(@class, "duration")]/text()').extract_first()

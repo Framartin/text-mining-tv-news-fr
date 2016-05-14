@@ -2,7 +2,7 @@
 import scrapy
 import sqlite3
 import re
-from scraping.items import Tf1Item
+from scraping.items import SubjectItem
 from datetime import datetime
 
 class Tf1Spider(scrapy.Spider):
@@ -24,7 +24,7 @@ class Tf1Spider(scrapy.Spider):
 
     def parse(self, response):
         urls_emissions = response.xpath('//div[@id="middleColumn"]/section/a[@class="img"]/@href').extract() # first emission
-        other_urls = response.xpath('//div[@id="middleColumn"]/article/a[@class="img"]/@href').extract() # other emissions
+        other_urls = response.xpath('//div[@id="middleColumn"]/div/article/a[@class="img"]/@href').extract() # other emissions
         if other_urls is not None:
             urls_emissions = urls_emissions + other_urls
         for url in urls_emissions:
@@ -44,7 +44,7 @@ class Tf1Spider(scrapy.Spider):
             date = None
         speaker = response.xpath('//p[contains(@class, "presenter")]/span[contains(@class, "by")]/text()').extract_first()
         #type
-        m = re.search(r'/(\d+)-heures/|/12-(13)|19-(20)|(soir)-3/', response.url)
+        m = re.search(r'/(\d+)-heures/|/12-(13)/|/19-(20)/|/(soir)-3/', response.url)
         if m is not None:
             if m.group(1) is not None:
                 type_jt = m.group(1)+'h'
@@ -84,9 +84,10 @@ class Tf1Spider(scrapy.Spider):
         else:
             self.logger.error('Topic not found in URL: '+response.url)
             topic = None
-        item = Tf1Item()
+        item = SubjectItem()
         item['url'] = response.url
         item['title'] = response.xpath('//h1/text()').extract_first()
+        item['subtitle'] = response.xpath('//h2/text()').extract_first()
         item['topic'] = topic
         item['duration'] = None
         item['date'] = response.meta['date']
@@ -94,11 +95,15 @@ class Tf1Spider(scrapy.Spider):
         item['type'] = response.meta['type']
         item['channel'] = response.meta['channel']
         description = response.xpath('//div[contains(@itemprop, "articleBody")]/p[descendant-or-self::text()]').extract()
+        h2_title = response.xpath('//div[contains(@itemprop, "articleBody")]/h2/text()').extract() # TODO
         if description is not None:
             description = ''.join(description) # join the element of text separated by h2 titles
-            item['description'] = re.sub('<.*?>', '', description) # remove HTML elements
+            item['description'] = re.sub('<.*?>', ' ', description) # remove HTML elements
         else:
             self.logger.error('Description error on: '+response.url)
             item['description'] = None
+        if h2_title is not None: # merge H2 title with description
+            h2_title = ''.join(h2_title)
+            description = description+' '+h2_title
         item['date_scraping'] = datetime.now()
         yield item

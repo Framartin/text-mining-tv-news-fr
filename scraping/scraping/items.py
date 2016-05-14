@@ -8,10 +8,11 @@
 import scrapy
 
 
-class Tf1Item(scrapy.Item):
+class SubjectItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
     title = scrapy.Field()
+    subtitle = scrapy.Field()
     url = scrapy.Field()
     channel = scrapy.Field()
     topic = scrapy.Field()
