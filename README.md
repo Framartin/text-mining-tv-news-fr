@@ -40,8 +40,14 @@ If `fr_FR.utf8` is not in `locale -a`, you have to install this locale on you sy
 
 ```
 cd scraping
-scrapy crawl tf1 -o test.json --logfile log.txt --loglevel INFO
+scrapy crawl tf1 --logfile log_tf1.txt --loglevel INFO
+scrapy crawl frtv --logfile log_frtv.txt --loglevel INFO
 ```
+
+### Notes on the data
+
+* No `speaker` for TF1
+* No `duration` for FranceTV
 
 ## Text Mining
 
@@ -55,8 +61,8 @@ scrapy crawl tf1 -o test.json --logfile log.txt --loglevel INFO
 > 
 > — my sleeping time
 
-* check duplicate in dates. Some TV news links are duplicated on pages
-* is speaker field reliable? http://lci.tf1.fr/jt-we/videos/2012/le-13heures-du-1er-juillet-7394672.html
+- [ ] check duplicate in dates. Some TV news links are duplicated on pages. Create an emission table? 
+- [x] ~~Is TF1 speaker field reliable?~~ NO: http://lci.tf1.fr/jt-we/videos/2012/le-13heures-du-1er-juillet-7394672.html
 
 ## License
 
