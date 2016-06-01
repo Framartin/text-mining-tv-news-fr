@@ -39,27 +39,27 @@ class Tf1Spider(scrapy.Spider):
         
     def parse_emission(self, response):
         title = response.xpath('//h1/text()').extract_first()
+        # date
         try:
-            # date
             date = re.search(r'(\d+)(?:er|e)?( (?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) 20\d{2})', title, re.IGNORECASE) # extract date from title
             date_clean = (date.group(1)+date.group(2)).lower()
             date = datetime.strptime(date_clean, '%d %B %Y').date()
-            # type
-            m = re.search('/jt-(.*?)/', response.url)
-            if m is not None:
-                type_emission = m.group(1)
-            else:
-                self.logger.error('Type not found in URL: '+response.url)
-                type_emission = None
-            if type_emission == "we": # we need to distinguish 13h and 20h
-                m = re.search(r'(20|13) ?(?:heures|h)', title)
-                if m is not None:
-                    type_emission = 'we'+m.group(1)+'h'
-                else:
-                    type_emission = 'we'
         except Exception:
             self.logger.error('Date not found in: '+str(title)+'; URL: '+response.url)
             date = None
+        # type
+        m = re.search('/jt-(.*?)/', response.url)
+        if m is not None:
+            type_emission = m.group(1)
+        else:
+            self.logger.error('Type not found in URL: '+response.url)
+            type_emission = None
+        if type_emission == "we": # we need to distinguish 13h and 20h
+            m = re.search(r'(20|13) ?(?:heures|h)', title)
+            if m is not None:
+                type_emission = 'we'+m.group(1)+'h'
+            else:
+                type_emission = 'we'
         # save emission
         content = {'url': response.url, 'title': title, 'date': date, 'channel': 'tf1', 'type': type_emission, 'speaker': None, 'date_scraping': datetime.now()}
         c = self.db['conn'].cursor()
