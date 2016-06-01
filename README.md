@@ -61,8 +61,8 @@ scrapy crawl frtv --logfile log_frtv.txt --loglevel INFO
 > 
 > — my sleeping time
 
-- [ ] check duplicate in dates. Some TV news links are duplicated on pages. Create an emission table? 
-- [x] ~~Is TF1 speaker field reliable?~~ NO: http://lci.tf1.fr/jt-we/videos/2012/le-13heures-du-1er-juillet-7394672.html
+- [x] check duplicates in dates. Some TV news are duplicated (2 URL for the same emission). Create an emission table with unique constraint on `(channel, type, date)`
+- [x] ~~Is TF1 speaker field reliable?~~ NO: [Counterexample](http://lci.tf1.fr/jt-we/videos/2012/le-13heures-du-1er-juillet-7394672.html)
 
 ## License
 
