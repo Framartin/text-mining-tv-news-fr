@@ -35,7 +35,7 @@ class FrTvSpider(scrapy.Spider):
         url_list_next = response.xpath('//a[@class="page next"]/@href').extract_first()
         if url_list_next is not None:
             url_list_next = response.urljoin(url_list_next)
-            #yield scrapy.Request(url_list_next, callback=self.parse) # comment for debug
+            yield scrapy.Request(url_list_next, callback=self.parse) # comment for debug
         
     def parse_emission(self, response):
         title = response.xpath('//h1/text()').extract_first()
