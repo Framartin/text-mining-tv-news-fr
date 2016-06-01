@@ -20,6 +20,7 @@ class FrTvSpider(scrapy.Spider):
     def __init__(self):
         self.db = {}
         self.db['conn'] = sqlite3.connect('../transcript.db')
+        self.db['conn'].execute("PRAGMA busy_timeout = 30000") # set PRAGMA busy_timeout to 30s to avoid the 'sqlite3.OperationalError: database is locked' error
         self.db['cursor'] = self.db['conn'].cursor()
 
     def parse(self, response):
