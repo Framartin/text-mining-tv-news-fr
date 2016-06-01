@@ -14,7 +14,7 @@ class ScrapingPipeline(object):
 class SqliteItemExporter(object):
 
     def open_spider(self, spider):
-        self.conn = sqlite3.connect('../transcript.db')
+        self.conn = sqlite3.connect('../transcript.db', timeout = 30)
         self.conn.execute("PRAGMA busy_timeout = 30000") # set PRAGMA busy_timeout to 30s to avoid the 'sqlite3.OperationalError: database is locked' error
         self.cursor = self.conn.cursor()
 

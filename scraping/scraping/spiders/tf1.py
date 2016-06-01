@@ -21,7 +21,7 @@ class Tf1Spider(scrapy.Spider):
         except Exception:
             raise SystemError("fr_FR.UTF-8 locale not installed. Please install it on your system")
         self.db = {}
-        self.db['conn'] = sqlite3.connect('../transcript.db')
+        self.db['conn'] = sqlite3.connect('../transcript.db', timeout = 30)
         self.db['conn'].execute("PRAGMA busy_timeout = 30000") # set PRAGMA busy_timeout to 30s to avoid the 'sqlite3.OperationalError: database is locked' error
         self.db['cursor'] = self.db['conn'].cursor()
 
@@ -57,10 +57,14 @@ class Tf1Spider(scrapy.Spider):
         # save emission
         content = {'url': response.url, 'title': title, 'date': date, 'channel': 'tf1', 'type': type_emission, 'speaker': None, 'date_scraping': datetime.now()}
         c = self.db['conn'].cursor()
-        c.execute(
-                    """insert into emission (url, title, channel, speaker, type, date, date_scraping)
-                                            values (?, ?, ?, ?, ?, ?, ?)""",
-                        (content['url'], content['title'], content['channel'], content['speaker'], content['type'], content['date'], content['date_scraping']))
+        try:
+            c.execute(
+                        """insert into emission (url, title, channel, speaker, type, date, date_scraping)
+                                                values (?, ?, ?, ?, ?, ?, ?)""",
+                            (content['url'], content['title'], content['channel'], content['speaker'], content['type'], content['date'], content['date_scraping']))
+        except sqlite3.IntegrityError as e:
+            self.logger.error('sqlite3 error on emission: ('+str(content['channel'])+', '+str(content['type'])+', '+str(content['date'])+') at url: '+ str(response.url))
+            raise e
         id_emission = c.lastrowid
         self.db['conn'].commit()
         if id_emission is None:
