@@ -51,6 +51,12 @@ class Tf1Spider(scrapy.Spider):
             else:
                 self.logger.error('Type not found in URL: '+response.url)
                 type_emission = None
+            if type_emission == "we": # we need to distinguish 13h and 20h
+                m = re.search(r'(20|13) ?(?:heures|h)', title)
+                if m is not None:
+                    type_emission = 'we'+m.group(1)+'h'
+                else:
+                    type_emission = 'we'
         except Exception:
             self.logger.error('Date not found in: '+str(title)+'; URL: '+response.url)
             date = None
