@@ -19,7 +19,7 @@ class Tf1Spider(scrapy.Spider):
         try:
             locale.setlocale(locale.LC_ALL, 'fr_FR.UTF-8')
         except Exception:
-            raise "fr_FR.UTF-8 locale not installed. Please install it on your system"
+            raise SystemError("fr_FR.UTF-8 locale not installed. Please install it on your system")
         self.db = {}
         self.db['conn'] = sqlite3.connect('../transcript.db')
         self.db['cursor'] = self.db['conn'].cursor()
@@ -27,28 +27,50 @@ class Tf1Spider(scrapy.Spider):
     def parse(self, response):
         urls_emissions = response.xpath('//a[@class="sz22 f1 c3"]/@href').extract()
         for url in urls_emissions:
-            url = response.urljoin(url)
-            yield scrapy.Request(url, callback=self.parse_emission)
+            # don't save duplicates
+            if not self.db['cursor'].execute("select * from emission where url = ?", (url,)).fetchone():
+                url = response.urljoin(url)
+                yield scrapy.Request(url, callback=self.parse_emission)
         url_list_next = response.xpath('//li[contains(@class, "suivante")]/a/@href').extract_first()
         if url_list_next is not None:
             url_list_next = response.urljoin(url_list_next)
-            yield scrapy.Request(url_list_next, callback=self.parse)
+            yield scrapy.Request(url_list_next, callback=self.parse) # comment for debug
         
     def parse_emission(self, response):
         title = response.xpath('//h1/text()').extract_first()
         try:
+            # date
             date = re.search(r'(\d+)(?:er|e)?( (?:janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre) 20\d{2})', title, re.IGNORECASE) # extract date from title
             date_clean = (date.group(1)+date.group(2)).lower()
             date = datetime.strptime(date_clean, '%d %B %Y').date()
+            # type
+            m = re.search('/jt-(.*?)/', response.url)
+            if m is not None:
+                type_emission = m.group(1)
+            else:
+                self.logger.error('Type not found in URL: '+response.url)
+                type_emission = None
         except Exception:
             self.logger.error('Date not found in: '+str(title)+'; URL: '+response.url)
             date = None
+        # save emission
+        content = {'url': response.url, 'title': title, 'date': date, 'channel': 'tf1', 'type': type_emission, 'speaker': None, 'date_scraping': datetime.now()}
+        c = self.db['conn'].cursor()
+        c.execute(
+                    """insert into emission (url, title, channel, speaker, type, date, date_scraping)
+                                            values (?, ?, ?, ?, ?, ?, ?)""",
+                        (content['url'], content['title'], content['channel'], content['speaker'], content['type'], content['date'], content['date_scraping']))
+        id_emission = c.lastrowid
+        self.db['conn'].commit()
+        if id_emission is None:
+            raise ValueError("id of the emission missing in the DB")
+        # extract subjects
         urls_subject = response.xpath('//ul/li/div/h3[contains(@class, "title")]/a/@href').extract()
         for url in urls_subject:
             # don't save duplicates
             if not self.db['cursor'].execute("select * from subject where url = ?", (url,)).fetchone():
                 request = scrapy.Request(url, callback=self.parse_subject)
-                request.meta['date'] = date
+                request.meta['id_emission'] = id_emission
                 yield request
 
     def parse_subject(self, response):
@@ -64,9 +86,9 @@ class Tf1Spider(scrapy.Spider):
             return None
         item = SubjectItem()
         item['url'] = response.url
+        item['id_emission'] = response.meta['id_emission']
         item['title'] = title
         item['subtitle'] = None
-        item['channel'] = 'tf1'
         item['topic'] = response.xpath('//div[@class="header"]/span[contains(@class, "topic")]/text()').extract_first()
         duration = response.xpath('//div[@class="header"]/span[@class="times"]/span[contains(@class, "duration")]/text()').extract_first()
         try:
@@ -85,14 +107,7 @@ class Tf1Spider(scrapy.Spider):
                 item['duration'] = minutes*60 + secondes
         except Exception:
             self.logger.error('Duration unknown: '+str(duration)+'; URL: '+response.url)
-        item['speaker'] = None #response.xpath('//div[@class="program-infos"]/div[contains(@class, "speaker")]/strong/text()').extract_first() #TODO: remove or parse from some descripton?
-        m = re.search('/jt-(.*?)/', response.url)
-        if m is not None:
-            item['type'] = m.group(1)
-        else:
-            self.logger.error('Type not found in URL: '+response.url)
-            item['type'] = None
-        item['date'] = response.meta['date']
+        #item['speaker'] = None #response.xpath('//div[@class="program-infos"]/div[contains(@class, "speaker")]/strong/text()').extract_first() #TODO: remove or parse from some descripton?
         description = response.xpath('//div[@class="footer"]/p[contains(@class, "description")]/text()').extract_first()
         if description is None:
             # other description path, for example in: http://lci.tf1.fr/jt-20h/videos/2016/sur-tf1-daniel-auteuil-revient-sur-son-dernier-role-dans-au-nom-8723010.html

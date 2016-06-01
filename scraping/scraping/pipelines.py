@@ -19,9 +19,9 @@ class SqliteItemExporter(object):
 
     def process_item(self, item, spider):
         self.cursor.execute(
-                """insert into subject (url, title, subtitle, channel, topic, duration, speaker, type, date, description, date_scraping)
-                                        values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (item["url"], item["title"], item["subtitle"], item["channel"], item["topic"], item["duration"], item["speaker"], item["type"], item["date"], item["description"], item["date_scraping"]))
+                """insert into subject (url, id_emission, title, subtitle, topic, duration, description, date_scraping)
+                                        values (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (item["url"], item['id_emission'], item["title"], item["subtitle"], item["topic"], item["duration"], item["description"], item["date_scraping"]))
         self.conn.commit()
         return item
 
