@@ -70,7 +70,7 @@ cd analysis
 
 - [x] check duplicates in dates. Some TV news are duplicated (2 URL for the same emission). Create an emission table with unique constraint on `(channel, type, date)`
 - [x] ~~Is TF1 speaker field reliable?~~ NO: [Counterexample](http://lci.tf1.fr/jt-we/videos/2012/le-13heures-du-1er-juillet-7394672.html)
-- [ ] Night edition of fr3 have 2 hours. Need to change the `soir` type, because it fails with the unique contraint on `(channel, type, date)`
+- [x] Night edition of fr3 have 2 hours. ~~Need to change the `soir` type, because it fails with the unique contraint on `(channel, type, date)`~~ Sunday night edition is indicated as saturday. Fix by changing the date of the 2nd consecutive saturday in the list of emission.
 
 ## License
 

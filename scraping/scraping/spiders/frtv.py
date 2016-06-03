@@ -3,7 +3,7 @@ import scrapy
 import sqlite3
 import re
 from scraping.items import SubjectItem
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class FrTvSpider(scrapy.Spider):
     name = "frtv"
@@ -28,21 +28,41 @@ class FrTvSpider(scrapy.Spider):
         other_urls = response.xpath('//div[@id="middleColumn"]/div/article/a[@class="img"]/@href').extract() # other emissions
         if other_urls is not None:
             urls_emissions = urls_emissions + other_urls
-        for url in urls_emissions:
+        # for 'soir' edition, if two monday are next to each other the 2nd one is the sunday
+        regex = r'^http://www\.francetvinfo\.fr/replay-jt/france-3/soir-3/jt-grand-soir-3-lundi-.*\.html$'
+        urls_lundi = [bool(re.search(regex, i)) for i in urls_emissions]
+        for i in range(0, len(urls_emissions)):
+            url = urls_emissions[i]
             url = response.urljoin(url)
+            # is the previous url a monday?
+            if i == 0:
+                previous = False
+                if 'last_is_monday' in response.meta: # the last emission of the previous page is a monday
+                    previous = True
+            else:
+                previous = urls_lundi[i-1]
+            need_day_minus_1 = (previous == urls_lundi[i] == True) # the previous emission is also a monday
             # don't save duplicates
             if not self.db['cursor'].execute("select * from emission where url = ?", (url,)).fetchone():
-                yield scrapy.Request(url, callback=self.parse_emission)
+                request = scrapy.Request(url, callback=self.parse_emission)
+                request.meta['need_day_minus_1'] = need_day_minus_1
+                yield request
         url_list_next = response.xpath('//a[@class="page next"]/@href').extract_first()
         if url_list_next is not None:
+            # is the last one a monday
             url_list_next = response.urljoin(url_list_next)
-            yield scrapy.Request(url_list_next, callback=self.parse) # comment for debug
+            request = scrapy.Request(url_list_next, callback=self.parse)
+            if urls_lundi[-1]:
+                request.meta['last_is_monday'] = True
+            yield request # comment for debug
         
     def parse_emission(self, response):
         title = response.xpath('//h1/text()').extract_first()
         date_row = response.xpath('//p[contains(@class, "schedule")]/span/text()').re_first('(\d+/\d+/20\d{2})')
         try:
             date = datetime.strptime(date_row, '%d/%m/%Y').date()
+            if response.meta['need_day_minus_1']: # need - 1 day
+                date = date - timedelta(days = 1)
         except Exception:
             self.logger.error('Date not found in: '+str(date_row)+'; URL: '+response.url)
             date = None
