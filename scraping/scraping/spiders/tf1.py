@@ -60,8 +60,14 @@ class Tf1Spider(scrapy.Spider):
                 type_emission = 'we'+m.group(1)+'h'
             else:
                 type_emission = 'we'
+        # speaker
+        # try to extract speaker from description. Not specified each time.
+        re_speaker = r'présentée? par (.+?)[. ]*$'
+        speaker = response.xpath('//div[@class="footer"]/p[contains(@class, "description")]/text()').re_first(re_speaker)
+        if speaker is None:
+            speaker = response.xpath('//p[@itemprop="description"]/text()').re_first(re_speaker)
         # save emission
-        content = {'url': response.url, 'title': title, 'date': date, 'channel': 'tf1', 'type': type_emission, 'speaker': None, 'date_scraping': datetime.now()}
+        content = {'url': response.url, 'title': title, 'date': date, 'channel': 'tf1', 'type': type_emission, 'speaker': speaker, 'date_scraping': datetime.now()}
         c = self.db['conn'].cursor()
         try:
             c.execute(
@@ -118,7 +124,7 @@ class Tf1Spider(scrapy.Spider):
                 item['duration'] = minutes*60 + secondes
         except Exception:
             self.logger.error('Duration unknown: '+str(duration)+'; URL: '+response.url)
-        #item['speaker'] = None #response.xpath('//div[@class="program-infos"]/div[contains(@class, "speaker")]/strong/text()').extract_first() #TODO: remove or parse from some descripton?
+        #item['speaker'] = None #response.xpath('//div[@class="program-infos"]/div[contains(@class, "speaker")]/strong/text()').extract_first()
         description = response.xpath('//div[@class="footer"]/p[contains(@class, "description")]/text()').extract_first()
         if description is None:
             # other description path, for example in: http://lci.tf1.fr/jt-20h/videos/2016/sur-tf1-daniel-auteuil-revient-sur-son-dernier-role-dans-au-nom-8723010.html
