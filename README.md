@@ -20,9 +20,10 @@ Personal project to analyze how TV deals with news. Statistics can be used to de
 > 
 > — me 30 seconds ago
 
-Install python3, [virtualenv](https://virtualenv.pypa.io) and sqlite3.
+Install python3, [virtualenv](https://virtualenv.pypa.io), python3-dev, and sqlite3.
 
 ```
+sudo apt install build-essential libssl-dev libffi-dev python3-dev # to install cryptography module
 virtualenv -p python3 venv
 . venv/bin/activate
 pip install -r requirements.txt
@@ -45,6 +46,10 @@ scrapy crawl frtv --logfile log_frtv.txt --loglevel INFO
 ```
 
 You can safely re-run the previous commands to add the new transcripts.
+
+### Tips to read the log
+
+Use `grep -v "Topic not found in URL:" log_frtv.txt | less` to filter the log lines.
 
 ### Notes on the data
 
