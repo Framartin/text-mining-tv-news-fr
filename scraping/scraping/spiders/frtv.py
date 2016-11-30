@@ -79,8 +79,8 @@ class FrTvSpider(scrapy.Spider):
             else:
                 type_jt = m.group(4)
         else:
-            self.logger.error('Type not found in URL: '+response.url)
-            type_jt = None
+            self.logger.error('Emission not saved. Type not found in URL: '+response.url)
+            return None
         #channel
         m = re.search(r'/france-(\d)/', response.url)
         if m is not None:
