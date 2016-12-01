@@ -99,8 +99,9 @@ class FrTvSpider(scrapy.Spider):
         except sqlite3.IntegrityError as e:
             self.logger.error('sqlite3 error on emission: ('+str(content['channel'])+', '+str(content['type'])+', '+str(content['date'])+') at url: '+ str(response.url))
             raise e
+        finally:
+            self.db['conn'].commit()
         id_emission = c.lastrowid
-        self.db['conn'].commit()
         if id_emission is None:
             raise ValueError("id of the emission missing in the DB")
         # extract subjects

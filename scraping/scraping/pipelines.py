@@ -24,9 +24,10 @@ class SqliteItemExporter(object):
                     """insert into subject (url, id_emission, title, subtitle, topic, duration, description, date_scraping)
                                             values (?, ?, ?, ?, ?, ?, ?, ?)""",
                         (item["url"], item['id_emission'], item["title"], item["subtitle"], item["topic"], item["duration"], item["description"], item["date_scraping"]))
-            self.conn.commit()
         except Exception as e:
             raise e
+        finally:
+            self.conn.commit()
         return item
 
     def close_spider(self, spider):
