@@ -119,6 +119,7 @@ class Tf1Spider(scrapy.Spider):
         xpath_sub_description = '//div[contains(@class, "article-block-paragraph")]/p/text()' # extract sub_description 
 
         # date
+        # TODO: trust only the <time>?
         date = response.xpath(xpath_sub_description).re_first(r'([0-3][0-9]/[01][0-9]/201[0-9])')
         if date is not None:
             date = datetime.strptime(date, '%d/%m/%Y').date()
@@ -194,7 +195,7 @@ class Tf1Spider(scrapy.Spider):
             raise ValueError("id of the emission missing in the DB")
 
         # topic
-        m = re.search(r'^http://www\.lci\.fr(?:\:[0-9]+)/(.*?)/', response.url)
+        m = re.search(r'^http://www\.lci\.fr(?:\:[0-9]+)?/(.*?)/', response.url)
         if m is not None:
             topic = m.group(1)
         else:
