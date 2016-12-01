@@ -27,17 +27,24 @@ class Tf1Spider(scrapy.Spider):
         self.db['cursor'] = self.db['conn'].cursor()
 
     def parse(self, response):
+        # some pages are broken
+        if response.url == 'http://www.lci.fr/emission/jt-we/30/':
+            self.logger.info('Skipping the list page: '+response.url)
+            yield scrapy.Request('http://www.lci.fr/emission/jt-we/31/', callback=self.parse)
         urls_emissions = response.xpath('//ul[@class="topic-chronology-milestone-component"]/li/a/@href').extract()
+        if urls_emissions is None:
+            self.logger.error('No subject links on page: '+response.url)
         for url in urls_emissions:
             if url not in ['', None]: # skip empty URL 
+                url = response.urljoin(url)
                 # don't save duplicates
-                if not self.db['cursor'].execute("select * from emission where url = ?", (url,)).fetchone():
-                    url = response.urljoin(url)
+                if not self.db['cursor'].execute("select * from subject where url = ?", (url,)).fetchone():
                     yield scrapy.Request(url, callback=self.parse_subject)
         url_list_next = response.xpath('//a[@class="pagination-link next"]/@href').extract_first()
         if url_list_next is not None:
             url_list_next = response.urljoin(url_list_next)
-            yield scrapy.Request(url_list_next, callback=self.parse) # comment for debug
+            if url_list_next not in ['http://www.lci.fr:80','http://www.lci.fr']: # end of the list
+                yield scrapy.Request(url_list_next, callback=self.parse) # comment for debug
         
     # def parse_emission(self, response):
     #     title = response.xpath('//h1/text()').extract_first()
