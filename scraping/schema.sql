@@ -18,7 +18,7 @@ create table subject (
 drop table if exists emission;
 create table emission (
   id integer primary key autoincrement,
-  url text not null unique,
+  url text unique,
   title text,
   channel text not null,
   speaker text,

@@ -53,9 +53,10 @@ Use `grep -v "Topic not found in URL:" log_frtv.txt | less` to filter the log li
 
 ### Notes on the data
 
-* `speaker` for TF1 is rarely available (extracted from the description of the emission, because the information inside the speaker `<div>` isn't reliable)
-* No `duration` for FranceTV
-* For TF1, `<h2>` titles inside the description of a subject are merged with the content of the description
+* To check that summary pages aren't saved on DB for tf1, check titles that are associated with `topic=replay`: `SELECT * FROM subject where topic='replay' ;`.
+* ~~`speaker` for TF1 is rarely available (extracted from the description of the emission, because the information inside the speaker `<div>` isn't reliable)~~
+* No `duration` for FranceTV and TF1
+* ~~For TF1, `<h2>` titles inside the description of a subject are merged with the content of the description~~
 
 ## Text Mining
 

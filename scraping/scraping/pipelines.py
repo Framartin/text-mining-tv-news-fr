@@ -19,11 +19,14 @@ class SqliteItemExporter(object):
         self.cursor = self.conn.cursor()
 
     def process_item(self, item, spider):
-        self.cursor.execute(
-                """insert into subject (url, id_emission, title, subtitle, topic, duration, description, date_scraping)
-                                        values (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (item["url"], item['id_emission'], item["title"], item["subtitle"], item["topic"], item["duration"], item["description"], item["date_scraping"]))
-        self.conn.commit()
+        try:
+            self.cursor.execute(
+                    """insert into subject (url, id_emission, title, subtitle, topic, duration, description, date_scraping)
+                                            values (?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (item["url"], item['id_emission'], item["title"], item["subtitle"], item["topic"], item["duration"], item["description"], item["date_scraping"]))
+            self.conn.commit()
+        except Exception as e:
+            raise e
         return item
 
     def close_spider(self, spider):
